@@ -1,28 +1,42 @@
+# Library
 install.packages("readxl")
 install.packages("dplyr")
 install.packages("lmtest")
+install.packages("ggplot2")
 install.packages(c("readxl", "sandwich", "lmtest"))
-
 library(readxl)
 library(dplyr)
 library(lmtest)
+library("ggplot2")
 library(sandwich)
 
-## OLS-REGRESSION MED HUBER-WHITE HETEROSKEDASTICITETES-ROBUSTA STANDARDFEL
+# OLS-REGRESSION MED HUBER-WHITE HETEROSKEDASTICITETES-ROBUSTA STANDARDFEL
 file_path <- "/Users/ruben/Reg.xlsx"
 data <- read_excel(file_path, range = "D1:Q60")
 data$TV <- log(data$TV)
 model <- lm (CAR1 ~ TV_log + Finadv + Gfc + Kont + Int + Lik, data = data)
 robust_se <- sqrt(diag(vcovHC(model, type = "HC1")))
 coeftest(model, vcov = vcovHC(model, type = "HC1"))
+model <- lm (LNCAR1 ~ Rykt + Gfc + Ln(TV), data = data)
+model <- lm (LNCAR1 ~ Rykt + Gfc + Ln(TV) Finadv + Int, data = data)
+model <- lm (LNCAR1 ~ Rykt + Gfc + Ln(TV) + Finadv + Kont + Int, data = data)
+summary(model)
+robust_se <- sqrt(diag(vcovHC(model, type = "HC1")))
+coeftest(model, vcov = vcovHC(model, type = "HC1"))
+model <- lm (WCAR1 ~ Rykt + Gfc + Ln(TV), data = data)
+model <- lm (WCAR1 ~ Rykt + Gfc + Ln(TV) + Finadv + Int, data = data)
+model <- lm (WCAR1 ~ Rykt + Gfc + Ln(TV) + Finadv + Kont + Int, data = data)
+summary(model)
+robust_se <- sqrt(diag(vcovHC(model, type = "HC1")))
+coeftest(model, vcov = vcovHC(model, type = "HC1"))
 
 
-## DESKRIPTIV STATISTIK
+# DESKRIPTIV STATISTIK
 >selected_vars <- data[, c("TV", "Lik", "Int", "Kont", "Finadv", "Gfc", "Rykt")]
 >summary(selected_vars)
 >describe(selected_vars)
 
-## MODELLDIAGNOSTIK
+# MODELLDIAGNOSTIK
 library(car)
 > vif_values <- vif(model)
 > print(vif_values)
@@ -40,7 +54,7 @@ library(tseries)
 > jb_test <- jarque.bera.test(residuals(model))
 > print(jb_test)
 
-## GRAFER
+# GRAFER
 plot <- ggplot(data, aes(x = Event, y = CAAR1)) +
   geom_line() +                           
   geom_point() +                          
