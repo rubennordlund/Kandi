@@ -30,6 +30,12 @@ summary(model)
 robust_se <- sqrt(diag(vcovHC(model, type = "HC1")))
 coeftest(model, vcov = vcovHC(model, type = "HC1"))
 
+# F-värdets kritiska värde
+>df1 <- 5 
+>df2 <- 52 
+>critical_value <- qf(0.95, df1, df2)
+>print(critical_value)
+
 
 # DESKRIPTIV STATISTIK
 >selected_vars <- data[, c("TV", "Lik", "Int", "Kont", "Finadv", "Gfc", "Rykt")]
