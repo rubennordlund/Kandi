@@ -1,0 +1,69 @@
+# Importing required packages
+import pandas as pd
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+from statsmodels.stats.diagnostic import het_breuschpagan
+import statsmodels.stats.stattools as stt
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+from scipy.stats import skew, kurtosis, f, jarque_bera
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Open relevant files from desktop
+file_path = "/Users/ruben/Kandi/Reg.xlsx" 
+data = pd.read_excel(file_path, usecols='D:Q') 
+data['TV_log'] = np.log(data['TV'])
+
+# OLS regression with robust standard errors (Huber-White)
+models = [
+    'CAR1 ~ Rykt + Gfc + np.log(TV),
+    'CAR1 ~ Rykt + Gfc + np.log(TV) + Finadv,
+    'CAR1 ~ Rykt + Gfc + np.log(TV) + Finadv + Kont + Int,
+    'CAR1 ~ Rykt + Gfc + np.log(TV) + Finadv + Int,
+    'LNCAR1 ~ Rykt + Gfc + np.log(TV)',
+    'LNCAR1 ~ Rykt + Gfc + np.log(TV) + Finadv + Int',
+    'LNCAR1 ~ Rykt + Gfc + np.log(TV) + Finadv + Kont + Int',
+    'WCAR1 ~ Rykt + Gfc + np.log(TV)',
+    'WCAR1 ~ Rykt + Gfc + np.log(TV) + Finadv + Int',
+    'WCAR1 ~ Rykt + Gfc + np.log(TV) + Finadv + Kont + Int'
+]
+
+for model_formula in models:
+    model = smf.ols(model_formula, data).fit(cov_type='HC1')
+    print(model.summary())
+
+# Critical value of the F-statistic
+df1, df2 = 5, 52
+critical_value = f.ppf(0.99, df1, df2)
+print(f"Critical F-value: {critical_value}")
+
+# Descriptive statistics
+selected_vars = data[['TV', 'Lik', 'Int', 'Kont', 'Finadv', 'Gfc', 'Rykt']]
+print(selected_vars.describe())
+
+# Example Model diagnostics for regression IV
+model = smf.ols('CAR1 ~ Rykt + Gfc + np.log(TV) + Finadv + Kont + Int', data).fit()
+
+# Variance Inflation Factor (VIF)
+vif_data = pd.DataFrame()
+vif_data["variable"] = [var for var in model.model.exog_names if var != 'Intercept']
+vif_data["VIF"] = [variance_inflation_factor(model.model.exog, i) for i in range(len(vif_data["variable"]))]
+print(vif_data)
+
+# Breusch-Pagan test
+bp_test = het_breuschpagan(model.resid, model.model.exog)
+print(f"Breusch-Pagan test: {bp_test}")
+
+# Durbin-Watson test
+dw_test = stt.durbin_watson(model.resid)
+print(f"Durbin-Watson test: {dw_test}")
+
+# Skewness and Kurtosis
+skew_value = skew(model.resid)
+kurt_value = kurtosis(model.resid)
+print(f"Skewness: {skew_value}, Kurtosis: {kurt_value}")
+
+# Jarque-Bera test
+jb_test = jarque_bera(model.resid)
+print(f"Jarque-Bera test: {jb_test}")
