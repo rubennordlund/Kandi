@@ -5,6 +5,7 @@ import statsmodels.formula.api as smf
 from statsmodels.stats.diagnostic import het_breuschpagan
 import statsmodels.stats.stattools as stt
 from statsmodels.stats.outliers_influence import variance_inflation_factor
+from scipy import stats
 from scipy.stats import skew, kurtosis, f, jarque_bera
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -67,3 +68,29 @@ print(f"Skewness: {skew_value}, Kurtosis: {kurt_value}")
 # Jarque-Bera test
 jb_test = jarque_bera(model.resid)
 print(f"Jarque-Bera test: {jb_test}")
+
+# Shapiro-Wilk test
+print("Shapiro-Wilk Test Statistics:", shapiro_test[0])
+print("p-value:", shapiro_test[1])
+
+# Plotting the CAARs
+columns_to_plot = ['CAAR1', 'WCAAR1', 'CAAR2', 'WCAAR2']
+std_devs = [0.147756427, 0.062358495, 0.112742731, 0.043872631]
+
+fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
+fig.suptitle('Grafter över CAAR')
+
+for i, col in enumerate(columns_to_plot):
+    ax = axes[i//2, i%2]
+    ax.plot(df['Event'], df[col])
+    ax.set_title(col)
+    ax.set_xlabel('Dagar')
+    ax.set_ylabel('Avkastning')
+    ax.set_ylim(-0.1, 0.42) 
+
+    ci = 0.9 * std_devs[i]
+    ax.fill_between(df['Event'], df[col] - ci, df[col] + ci, color='royalblue', alpha=0.1)
+
+plt.tight_layout()
+plt.subplots_adjust(top=0.9)
+plt.show()
