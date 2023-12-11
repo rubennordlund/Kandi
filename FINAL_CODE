@@ -1,4 +1,4 @@
-# Importing required packages
+# IMPORT AV VÄSENTLIGA PACKAGES
 import pandas as pd
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
@@ -9,14 +9,15 @@ from scipy import stats
 from scipy.stats import skew, kurtosis, f, jarque_bera
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import numpy as np
 
-# Open relevant files from desktop
-file_path = "/Users/ruben/Kandi/Reg.xlsx" 
+# RELEVANTA FILER FÖR REGRESSION FRÅN MASTERDATASET
+file_path = "/Users/ruben/Kandi/KANDIMASTERDATA.xlsx" 
 data = pd.read_excel(file_path, usecols='D:Q') 
 data['TV_log'] = np.log(data['TV'])
 
-# OLS regression with robust standard errors (Huber-White)
+# OLS-REGRESSIONE MED ROBUSTA STANDARDFEL (Huber-White)
 models = [
     'CAR1 ~ Rykt + Gfc + np.log(TV),
     'CAR1 ~ Rykt + Gfc + np.log(TV) + Finadv,
@@ -34,16 +35,16 @@ for model_formula in models:
     model = smf.ols(model_formula, data).fit(cov_type='HC1')
     print(model.summary())
 
-# Critical value of the F-statistic
+# F-VÄRDE FRÅN FÖRDELNINGEN
 df1, df2 = 5, 52
 critical_value = f.ppf(0.99, df1, df2)
 print(f"Critical F-value: {critical_value}")
 
-# Descriptive statistics
-selected_vars = data[['TV', 'Lik', 'Int', 'Kont', 'Finadv', 'Gfc', 'Rykt']]
+# DESKRIPTIV STATISTIK
+selected_vars = data[['TV', 'Int', 'Kont', 'Finadv', 'Gfc', 'Rykt']]
 print(selected_vars.describe())
 
-# Example Model diagnostics for regression IV
+# EXEMPEL MODELLDIAGNOSTIK FÖR REGRESSION IV
 model = smf.ols('CAR1 ~ Rykt + Gfc + np.log(TV) + Finadv + Kont + Int', data).fit()
 
 # Variance Inflation Factor (VIF)
@@ -73,7 +74,7 @@ print(f"Jarque-Bera test: {jb_test}")
 print("Shapiro-Wilk Test Statistics:", shapiro_test[0])
 print("p-value:", shapiro_test[1])
 
-# Plotting the CAARs
+# GRAFER ÖVER CAARS
 columns_to_plot = ['CAAR1', 'WCAAR1', 'CAAR2', 'WCAAR2']
 std_devs = [0.147756427, 0.062358495, 0.112742731, 0.043872631]
 
@@ -94,3 +95,52 @@ for i, col in enumerate(columns_to_plot):
 plt.tight_layout()
 plt.subplots_adjust(top=0.9)
 plt.show()
+
+
+# GRAFER ÖVER TRANSAKTIONER
+df = pd.read_excel('/Users/ruben/Kandi/DEALS.xlsx', sheet_name='2', usecols='A:D')
+df['Date'] = pd.to_datetime(df['Date'])
+
+df['RollingAvg'] = df['Deals'].rolling(window=12, min_periods=1).mean()
+
+fig, ax1 = plt.subplots(figsize=(16, 8))
+
+ax1.plot(df['Date'], df['Rate'], color='blue', label='EUR3MD')
+ax1.set_ylabel('EUR3MD', color='black')
+ax1.tick_params(axis='y', labelcolor='black')
+
+ax2 = ax1.twinx()
+ax2.bar(df['Date'], df['Deals'], color='royalblue', width=15, label='Transaktioner per månad', alpha=0.5)
+ax2.set_ylabel('Antal  M&A transaktioner', color='black')
+ax2.tick_params(axis='y', labelcolor='black')
+
+current_max_deals = df['Deals'].max()
+ax2.set_ylim(0, current_max_deals * 2,7)
+
+ax2.plot(df['Date'], df['RollingAvg'], color='black', linestyle='--', label='SMA 12-månaders transaktioner')
+
+ax1.xaxis.set_major_locator(mdates.YearLocator())
+ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+
+plt.title('OMXHGI & transaktioner per månad')
+fig.tight_layout()
+plt.legend(loc='upper left')
+plt.show()
+
+# INDUSTRIFÖRDELNING
+industry = ['Teknologi', 'Industri', 'Finans', 'Fastighet', 'Material', 'Konsument', 'Telekommunikation', 'Hälsovård', 'Media', 'Energi']
+observations = [14, 11, 4, 6, 9, 8, 3, 4, 3, 1]
+percentages = [23.73, 18.64, 6.78, 10.17, 15.25, 13.56, 5.08, 6.78, 5.08, 1.69]
+
+plt.figure(figsize=(10, 8))
+bars = plt.bar(industry, percentages, color='blue')
+plt.ylim(0, max(percentages) + 5)
+for bar, obs in zip(bars, observations):
+    yval = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2.0, yval + 0, obs, va='bottom', ha='center')
+
+plt.title('Observationer per industri')
+plt.xlabel('Industri')
+plt.ylabel('Procent (%)')
+plt.xticks(rotation=45, ha='right')  
+plt.tight_layout()  
