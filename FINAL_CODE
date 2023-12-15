@@ -89,7 +89,7 @@ for i, col in enumerate(columns_to_plot):
     ax.set_ylabel('Avkastning')
     ax.set_ylim(-0.1, 0.42) 
 
-    ci = 0.9 * std_devs[i]
+    ci = 1.96 * std_devs[i]
     ax.fill_between(df['Event'], df[col] - ci, df[col] + ci, color='royalblue', alpha=0.1)
 
 plt.tight_layout()
